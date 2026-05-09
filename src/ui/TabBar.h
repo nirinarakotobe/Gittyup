@@ -18,7 +18,11 @@ class TabBar : public QTabBar {
 public:
   TabBar(QWidget *parent = nullptr);
 
+signals:
+  void closeTabRequested(int index);
+
 protected:
+  void tabInserted(int index) override;
   QSize minimumTabSizeHint(int index) const override;
   QSize tabSizeHint(int index) const override;
 

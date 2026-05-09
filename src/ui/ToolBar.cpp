@@ -35,7 +35,11 @@ namespace {
 
 const int kButtonWidth = 36;
 const int kButtonHeight = 24;
+#ifdef Q_OS_MACOS
+const int kToolBarHeight = 38;
+#else
 const int kToolBarHeight = 32;
+#endif
 const QString kStarredQuery = "is:starred";
 const QString kStyleSheet = "QToolButton {"
                             "  border-radius: 4px;"
@@ -91,6 +95,11 @@ public:
 
   QSize sizeHint() const override {
     return QSize(qMax(0, mWidth), kToolBarHeight);
+  }
+
+  void setWidth(int width) {
+    mWidth = width;
+    updateGeometry();
   }
 
 private:
@@ -731,13 +740,15 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
   // Disable the built-in context menu.
   setContextMenuPolicy(Qt::PreventContextMenu);
 
-  addWidget(new Spacer(4, this));
+  mLeadingSpacer = new Spacer(4, this);
+  addWidget(mLeadingSpacer);
 
   SidebarButton *sidebarButton = new SidebarButton(SidebarButton::Left, this);
   sidebarButton->setToolTip(tr("Show repository sidebar"));
   addWidget(sidebarButton);
-  connect(sidebarButton, &QAbstractButton::clicked,
-          [parent] { parent->setSideBarVisible(!parent->isSideBarVisible()); });
+  connect(sidebarButton, &QAbstractButton::clicked, [parent] {
+    parent->setSideBarVisible(!parent->isSideBarVisible());
+  });
 
   addWidget(new Spacer(4, this));
 
@@ -962,6 +973,10 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
     QStringList terms = mSearchField->text().split(QRegularExpression("\\s+"));
     mStarButton->setChecked(terms.contains(kStarredQuery));
   });
+}
+
+void ToolBar::setLeadingInset(int inset) {
+  static_cast<Spacer *>(mLeadingSpacer)->setWidth(inset);
 }
 
 void ToolBar::updateButtons(int ahead, int behind) {

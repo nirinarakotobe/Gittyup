@@ -27,6 +27,7 @@ public:
   ToolBar(MainWindow *parent);
 
   SearchField *searchField() const { return mSearchField; }
+  void setLeadingInset(int inset);
 
 private:
   void updateButtons(int ahead, int behind);
@@ -40,6 +41,7 @@ private:
 
   QToolButton *mPrevButton;
   QToolButton *mNextButton;
+  QWidget *mLeadingSpacer;
 
   QToolButton *mFetchButton;
   QToolButton *mPullButton;
