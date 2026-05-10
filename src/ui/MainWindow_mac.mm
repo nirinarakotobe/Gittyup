@@ -9,9 +9,12 @@
 
 #include "MainWindow.h"
 #include "RepoView.h"
+#include "ToolBar.h"
 #include "app/Application.h"
 #include <QPainter>
 #include <QString>
+#include <QtMath>
+#include <algorithm>
 #import <AppKit/AppKit.h>
 
 namespace {
@@ -190,6 +193,84 @@ static const NSTouchBarItemIdentifier kRemote = @"com.gittyup.Remote";
 void MainWindow::installTouchBar()
 {
   [[TouchBarProvider alloc] initWithWindow:this];
+}
+
+void MainWindow::applyMacWindowChrome()
+{
+  NSView *view = reinterpret_cast<NSView *>(winId());
+  NSWindow *window = view.window;
+  if (!window)
+    return;
+
+  window.titleVisibility = NSWindowTitleHidden;
+  window.titlebarAppearsTransparent = YES;
+
+  if (!mToolBar)
+    return;
+
+  mToolBar->setFixedHeight(mToolBar->sizeHint().height());
+  if (mShown)
+    alignMacWindowButtons();
+  mToolBar->setLeadingInset(macToolbarLeadingInset());
+}
+
+void MainWindow::alignMacWindowButtons()
+{
+  NSView *view = reinterpret_cast<NSView *>(winId());
+  NSWindow *window = view.window;
+  if (!window || !mToolBar)
+    return;
+
+  NSView *toolbarView = reinterpret_cast<NSView *>(mToolBar->winId());
+  if (!toolbarView)
+    return;
+
+  NSButton *buttons[] = {
+    [window standardWindowButton:NSWindowCloseButton],
+    [window standardWindowButton:NSWindowMiniaturizeButton],
+    [window standardWindowButton:NSWindowZoomButton],
+  };
+
+  for (NSButton *button : buttons) {
+    if (!button || !button.superview)
+      continue;
+
+    button.hidden = NO;
+    button.alphaValue = 1.0;
+
+    NSRect frame = button.frame;
+    NSPoint toolbarCenter =
+        NSMakePoint(NSMidX(toolbarView.bounds), NSMidY(toolbarView.bounds));
+    toolbarCenter = [toolbarView convertPoint:toolbarCenter
+                                        toView:button.superview];
+    frame.origin.y = toolbarCenter.y - NSHeight(frame) / 2.0;
+    button.frame = frame;
+  }
+}
+
+int MainWindow::macToolbarLeadingInset() const
+{
+  NSView *view =
+      reinterpret_cast<NSView *>(const_cast<MainWindow *>(this)->winId());
+  NSWindow *window = view.window;
+  if (!window)
+    return 4;
+
+  NSButton *buttons[] = {
+    [window standardWindowButton:NSWindowCloseButton],
+    [window standardWindowButton:NSWindowMiniaturizeButton],
+    [window standardWindowButton:NSWindowZoomButton],
+  };
+
+  CGFloat maxX = 0;
+  for (NSButton *button : buttons) {
+    if (!button)
+      continue;
+
+    maxX = std::max(maxX, NSMaxX(button.frame));
+  }
+
+  return maxX > 0 ? qCeil(maxX + 12) : 4;
 }
 
 void MainWindow::updateTouchBar(int ahead, int behind)

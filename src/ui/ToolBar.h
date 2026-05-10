@@ -18,6 +18,7 @@ class MainWindow;
 class RepoView;
 class SearchField;
 class QButtonGroup;
+class QMouseEvent;
 class QToolButton;
 
 class ToolBar : public QToolBar {
@@ -28,6 +29,9 @@ public:
 
   SearchField *searchField() const { return mSearchField; }
   void setLeadingInset(int inset);
+
+protected:
+  void mousePressEvent(QMouseEvent *event) override;
 
 private:
   void updateButtons(int ahead, int behind);

@@ -17,6 +17,7 @@ class RepoView;
 class TabWidget;
 class ToolBar;
 class MenuBar;
+class QResizeEvent;
 
 namespace git {
 class Submodule;
@@ -59,11 +60,20 @@ public:
 
 protected:
   void showEvent(QShowEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
   void closeEvent(QCloseEvent *event) override;
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dropEvent(QDropEvent *event) override;
 
 private:
+#ifdef Q_OS_MACOS
+  void applyMacWindowChrome();
+  void alignMacWindowButtons();
+  int macToolbarLeadingInset() const;
+  void installTouchBar();
+  void updateTouchBar(int ahead, int behind);
+#endif
+
   void updateTabNames();
   void updateInterface();
   void updateWindowTitle(int ahead = -1, int behind = -1);

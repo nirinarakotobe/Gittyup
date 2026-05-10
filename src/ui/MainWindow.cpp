@@ -62,15 +62,28 @@ private:
   int mSections = 1;
 };
 
+#ifdef Q_OS_MACOS
+Qt::WindowFlags mainWindowFlags(Qt::WindowFlags flags) {
+  return flags | Qt::ExpandedClientAreaHint | Qt::NoTitleBarBackgroundHint;
+}
+#else
+Qt::WindowFlags mainWindowFlags(Qt::WindowFlags flags) { return flags; }
+#endif
+
 } // namespace
 
 bool MainWindow::sSaveWindowSettings = false;
 
 MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
                        Qt::WindowFlags flags)
-    : QMainWindow(parent, flags) {
+    : QMainWindow(parent, mainWindowFlags(flags)) {
   setAttribute(Qt::WA_DeleteOnClose);
+#ifdef Q_OS_MACOS
+  setAttribute(Qt::WA_ContentsMarginsRespectsSafeArea, false);
+  setUnifiedTitleAndToolBarOnMac(false);
+#else
   setUnifiedTitleAndToolBarOnMac(true);
+#endif
   setAcceptDrops(true);
 
   // Create new menu bar for this window if there isn't a shared one.
@@ -80,6 +93,10 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   // Create tool bar.
   mToolBar = new ToolBar(this);
   addToolBar(Qt::TopToolBarArea, mToolBar);
+#ifdef Q_OS_MACOS
+  mToolBar->setAttribute(Qt::WA_ContentsMarginsRespectsSafeArea, false);
+  applyMacWindowChrome();
+#endif
 
   // Initialize search.
   SearchField *searchField = mToolBar->searchField();
@@ -412,6 +429,14 @@ void MainWindow::showEvent(QShowEvent *event) {
   updateInterface();
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+
+#ifdef Q_OS_MACOS
+  applyMacWindowChrome();
+#endif
+}
+
 void MainWindow::closeEvent(QCloseEvent *event) {
   // FIXME: Attempt to close windows before writing settings?
 
@@ -518,6 +543,9 @@ void MainWindow::updateInterface() {
 
   updateWindowTitle(ahead, behind);
   mToolBar->updateButtons(ahead, behind);
+#ifdef Q_OS_MACOS
+  applyMacWindowChrome();
+#endif
 }
 
 void MainWindow::updateWindowTitle(int ahead, int behind) {

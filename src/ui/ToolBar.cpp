@@ -23,6 +23,7 @@
 #include <QButtonGroup>
 #include <QHBoxLayout>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QStyleOptionToolButton>
@@ -977,6 +978,20 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
 
 void ToolBar::setLeadingInset(int inset) {
   static_cast<Spacer *>(mLeadingSpacer)->setWidth(inset);
+}
+
+void ToolBar::mousePressEvent(QMouseEvent *event) {
+#ifdef Q_OS_MACOS
+  if (event->button() == Qt::LeftButton) {
+    if (QWindow *handle = window()->windowHandle()) {
+      event->accept();
+      handle->startSystemMove();
+      return;
+    }
+  }
+#endif
+
+  QToolBar::mousePressEvent(event);
 }
 
 void ToolBar::updateButtons(int ahead, int behind) {

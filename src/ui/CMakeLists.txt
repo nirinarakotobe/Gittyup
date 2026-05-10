@@ -81,3 +81,7 @@ target_link_libraries(
   Qt6::Widgets)
 
 set_target_properties(ui PROPERTIES AUTOMOC ON)
+
+if(APPLE)
+  target_sources(ui PRIVATE MainWindow_mac.mm)
+endif()
