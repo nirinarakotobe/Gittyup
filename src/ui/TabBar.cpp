@@ -9,8 +9,55 @@
 
 #include "TabBar.h"
 
+#include <QAbstractButton>
+#include <QPainter>
 #include <QStyle>
-#include <QToolButton>
+#include <QStyleOption>
+
+namespace {
+
+class CloseButton : public QAbstractButton {
+public:
+  CloseButton(QWidget *parent = nullptr) : QAbstractButton(parent) {
+    setAttribute(Qt::WA_Hover);
+    setFocusPolicy(Qt::NoFocus);
+    setToolTip(tr("Close Tab"));
+  }
+
+  QSize sizeHint() const override {
+    return QSize(style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth),
+                 style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight));
+  }
+
+protected:
+  void enterEvent(QEnterEvent *event) override {
+    QAbstractButton::enterEvent(event);
+    update();
+  }
+
+  void leaveEvent(QEvent *event) override {
+    QAbstractButton::leaveEvent(event);
+    update();
+  }
+
+  void paintEvent(QPaintEvent *event) override {
+    Q_UNUSED(event)
+
+    QStyleOption option;
+    option.initFrom(this);
+    option.rect = rect();
+    if (underMouse()) {
+      option.state |= QStyle::State_MouseOver;
+      option.state |= QStyle::State_Selected;
+    }
+
+    QPainter painter(this);
+    style()->drawPrimitive(QStyle::PE_IndicatorTabClose, &option, &painter,
+                           this);
+  }
+};
+
+} // namespace
 
 TabBar::TabBar(QWidget *parent) : QTabBar(parent) {
   setAutoHide(true);
@@ -20,15 +67,8 @@ TabBar::TabBar(QWidget *parent) : QTabBar(parent) {
 void TabBar::tabInserted(int index) {
   QTabBar::tabInserted(index);
 
-  QToolButton *button = new QToolButton(this);
-  button->setAutoRaise(true);
-  button->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
-  button->setIconSize(QSize(10, 10));
-  button->setFixedSize(22, 16);
-  button->setFocusPolicy(Qt::NoFocus);
-  button->setStyleSheet("QToolButton { padding-left: 6px; }");
-  button->setToolTip(tr("Close Tab"));
-  connect(button, &QToolButton::clicked, this, [this, button] {
+  CloseButton *button = new CloseButton(this);
+  connect(button, &CloseButton::clicked, this, [this, button] {
     for (int i = 0; i < count(); ++i) {
       if (tabButton(i, QTabBar::LeftSide) == button) {
         emit closeTabRequested(i);

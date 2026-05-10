@@ -141,14 +141,13 @@ private:
 TabWidget::TabWidget(QWidget *parent) : QTabWidget(parent) {
   TabBar *bar = new TabBar(this);
   bar->setMovable(true);
-  bar->setTabsClosable(true);
   setTabBar(bar);
 
   // Create default widget.
   mDefaultWidget = new DefaultWidget(this);
 
   // Handle tab close.
-  connect(this, &TabWidget::tabCloseRequested, [this](int index) {
+  connect(bar, &TabBar::closeTabRequested, [this](int index) {
     emit tabAboutToBeRemoved();
     widget(index)->close();
   });
